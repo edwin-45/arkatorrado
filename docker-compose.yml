@@ -1,0 +1,36 @@
+version: '3.8'
+services:
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: arkadb
+      MYSQL_USER: arkadbuser
+      MYSQL_PASSWORD: arkadbpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - arkatorrado-net
+
+  arkatorrado-app:
+    build: .
+    container_name: arkatorrado-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/arkadb?useSSL=false&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: arkadbuser
+      SPRING_DATASOURCE_PASSWORD: arkadbpass
+    networks:
+      - arkatorrado-net
+
+volumes:
+  db_data:
+
+networks:
+  arkatorrado-net:
