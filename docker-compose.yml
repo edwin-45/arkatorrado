@@ -1,19 +1,24 @@
 version: '3.8'
+
 services:
   mysql-db:
     image: mysql:8.0
     container_name: mysql-db
     environment:
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: arkadb
-      MYSQL_USER: arkadbuser
-      MYSQL_PASSWORD: arkadbpass
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: arkabd
+      MYSQL_ROOT_HOST: '%'
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
       - arkatorrado-net
+    command: --default-authentication-plugin=mysql_native_password --bind-address=0.0.0.0
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      timeout: 20s
+      retries: 10
 
   arkatorrado-app:
     build: .
@@ -21,16 +26,64 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - mysql-db
+      mysql-db:
+        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/arkadb?useSSL=false&serverTimezone=UTC
-      SPRING_DATASOURCE_USERNAME: arkadbuser
-      SPRING_DATASOURCE_PASSWORD: arkadbpass
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-db:3306/arkabd?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
     networks:
       - arkatorrado-net
+
+  arka-cotizador:
+    build:
+      context: ./arka-cotizador
+      dockerfile: Dockerfile
+    container_name: arka-cotizador
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_R2DBC_URL: r2dbc:h2:mem:///cotizador_db?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      SPRING_R2DBC_USERNAME: sa
+      SPRING_R2DBC_PASSWORD: ""
+    networks:
+      - arkatorrado-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  arka-gestor-solicitudes:
+    build:
+      context: ./arka-gestor-solicitudes
+      dockerfile: Dockerfile
+    container_name: arka-gestor-solicitudes
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_R2DBC_URL: r2dbc:h2:mem:///gestor_db?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+      SPRING_R2DBC_USERNAME: sa
+      SPRING_R2DBC_PASSWORD: ""
+      PROVEEDORES_COTIZADOR_URL: http://arka-cotizador:8081
+    depends_on:
+      arka-cotizador:
+        condition: service_healthy
+    networks:
+      - arkatorrado-net
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
 volumes:
   db_data:
 
 networks:
   arkatorrado-net:
+    driver: bridge
