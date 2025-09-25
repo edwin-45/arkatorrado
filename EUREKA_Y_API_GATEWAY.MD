@@ -1,3 +1,194 @@
+# Documentación completa: API Gateway y Eureka Server
+
+Esta guía describe cómo funciona y cómo ejecutar los módulos API Gateway y Eureka Server del proyecto, su configuración, rutas disponibles, seguridad, despliegue con Docker y resolución de problemas comunes.
+
+Índice:
+- Introducción
+- Requisitos
+- Puertos y servicios
+- Eureka Server
+  - Resumen
+  - Configuración (application.yml)
+  - Seguridad
+  - Ejecución local
+  - Despliegue con Docker
+  - Integración de clientes
+  - Observabilidad
+  - Problemas comunes
+- API Gateway
+  - Resumen
+  - Rutas y mapeos
+  - Endpoints del propio Gateway
+  - Descubrimiento de servicios
+  - Ejecución local
+  - Consideraciones de seguridad
+  - Observabilidad y logging
+  - Problemas comunes
+- Ejemplos de prueba (curl)
+- Recomendaciones y buenas prácticas
+
+---
+
+## Introducción
+
+La arquitectura está basada en microservicios registrados en un Service Discovery (Eureka Server). El API Gateway (Spring Cloud Gateway) actúa como punto de entrada único, enruta tráfico a los microservicios y expone endpoints de información y salud.
+
+- Eureka Server: Service Discovery (puerto 8761)
+- API Gateway: Proxy y ruteo (puerto 8080)
+
+Este documento está basado en el código en:
+- eureka-server
+- api-gateway
+
+---
+
+## Requisitos
+
+- Java 21 (Temurin o equivalente)
+- Gradle (el proyecto incluye Gradle Wrapper)
+- Docker (opcional, para despliegue en contenedor)
+
+---
+
+## Puertos y servicios
+
+- Eureka Server: 8761 (UI del dashboard en /)
+- API Gateway: 8080
+- Aplicación principal (mencionada en mensajes del Gateway): 8888 (externa a este módulo)
+
+---
+
+## Eureka Server
+
+### Resumen
+
+Eureka Server es el registro de servicios. Los microservicios clientes se registran y el API Gateway (y otros clientes) descubren sus ubicaciones a través de él.
+
+Archivo clave:
+- eureka-server/src/main/resources/application.yml
+- eureka-server/src/main/java/com/skillnest/eurekaserver/config/SecurityConfig.java
+- eureka-server/Dockerfile
+
+### Configuración (application.yml)
+
+Configuración principal (resumen):
+- Puerto: 8761
+- spring.security.user: credenciales por defecto admin/admin123
+- eureka.client.register-with-eureka: false
+- eureka.client.fetch-registry: false
+- eureka.server.enable-self-preservation: false
+- eureka.instance.hostname: localhost
+
+La URL por defecto para clientes:
+- defaultZone: http://admin:admin123@localhost:8761/eureka/
+
+Nota: Aunque se incluyen credenciales en la URL, se ha configurado acceso libre a /eureka/** (ver seguridad).
+
+### Seguridad
+
+SecurityConfig (resumen):
+- Se desactiva CSRF
+- Se permite sin autenticación: /eureka/**
+- Cualquier otra ruta requiere autenticación HTTP Basic
+- Se define usuario/contraseña por defecto: admin/admin123
+
+Implicaciones:
+- El dashboard y las rutas de eureka (UI y endpoints /eureka/**) son públicas.
+- Endpoints como /actuator/** requieren autenticación básica, a menos que se ajusten las reglas.
+
+Sugerencia:
+- Si necesitas proteger /eureka/**, elimina el permitAll y obliga HTTP Basic.
+- Si quieres permitir /actuator/health sin auth (recomendado para healthchecks), añade permitAll para /actuator/health.
+
+Ejemplo de ajuste rápido:
+- Cambiar SecurityConfig para permitir /actuator/health:
+  - .requestMatchers("/eureka/**", "/actuator/health").permitAll()
+
+### Ejecución local
+
+1) Ejecutar con Gradle:
+- Linux/Mac: ./gradlew :eureka-server:bootRun
+- Windows:   gradlew.bat :eureka-server:bootRun
+
+2) Ejecutar JAR (tras build):
+- Build: ./gradlew :eureka-server:build
+- Ejecutar: java -jar eureka-server/build/libs/eureka-server-<version>.jar
+
+3) Acceso:
+- UI: http://localhost:8761
+- Endpoint de eureka: http://localhost:8761/eureka/
+
+### Despliegue con Docker
+
+El Dockerfile realiza build de sólo el módulo eureka-server y genera una imagen runtime basada en JRE Alpine.
+
+Build:
+- docker build -t arka-eureka-server -f eureka-server/Dockerfile .
+
+Run:
+- docker run --name eureka -p 8761:8761 arka-eureka-server
+
+Healthcheck del contenedor:
+- Actualmente apunta a http://localhost:8761/actuator/health
+- Por defecto, ese endpoint requiere autenticación básica, por lo que el healthcheck fallará.
+
+Soluciones:
+- Permitir /actuator/health en SecurityConfig (recomendado)
+- O cambiar el HEALTHCHECK para enviar credenciales: curl -f -u admin:admin123 http://localhost:8761/actuator/health
+
+### Integración de clientes
+
+Para un microservicio que se registra en Eureka, configura:
+- eureka.client.service-url.defaultZone: http://admin:admin123@<host>:8761/eureka/
+- eureka.instance.prefer-ip-address: true (opcional)
+- spring.application.name: <nombre-del-servicio>
+
+En Docker Compose o una red Docker, NO uses localhost dentro del contenedor. Usa el nombre del servicio de Eureka, por ejemplo:
+- http://admin:admin123@eureka-server:8761/eureka/
+
+### Observabilidad
+
+- Para exponer /actuator/**, añade configuración en application.yml del módulo y ajusta seguridad.
+- Ejemplo (en Eureka):
+  - management.endpoints.web.exposure.include: "*"
+  - management.endpoint.health.show-details: "always"
+- Recuerda ajustar SecurityConfig si quieres acceder sin autenticación a endpoints de salud.
+
+### Problemas comunes (Eureka)
+
+- Healthcheck de Docker falla:
+  - Causa: /actuator/health requiere auth
+  - Solución: permitir /actuator/health o usar curl con -u admin:admin123
+
+- Clientes no se registran:
+  - Verifica la URL defaultZone
+  - En contenedores, evita localhost; usa el nombre DNS interno (eureka-server) o la IP
+
+- La UI de Eureka no carga:
+  - Asegura que el puerto 8761 está expuesto y que el contenedor está UP
+  - Revisa logs de arranque
+
+---
+
+## API Gateway
+
+### Resumen
+
+API Gateway basado en Spring Cloud Gateway. Expone rutas hacia microservicios registrados en Eureka y provee endpoints informativos:
+- GET /           -> info del Gateway
+- GET /health     -> estado rápido
+- GET /routes     -> descripción de rutas
+
+Archivos clave:
+- api-gateway/src/main/resources/application.yml
+- api-gateway/src/main/java/com/skillnest/apigateway/config/GatewayConfig.java
+- api-gateway/src/main/java/com/skillnest/apigateway/controller/*.java
+
+Nota importante: Las rutas están definidas tanto en application.yml como en GatewayConfig.java. Evita duplicidades o inconsistencias manteniendo una única fuente de verdad (recomendado: sólo YAML o sólo Java).
+
+### Rutas y mapeos
+
+Rutas definidas en application.yml:
 
 | ID                        | Path                  | Destino (URI)                     | Filtros            | Notas |
 |--------------------------|-----------------------|-----------------------------------|--------------------|-------|
@@ -142,3 +333,4 @@ logging.level.org.springframework.cloud.loadbalancer: INFO
 
 - Actuator de Eureka (si habilitas y/o con credenciales):
   - curl -u admin:admin123 http://localhost:8761/actuator/health
+
