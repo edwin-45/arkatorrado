@@ -1,0 +1,93 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        # Rutas de autenticación - ahora sin filtros de seguridad
+        - id: auth-service
+          uri: lb://arka-gestor-solicitudes
+          predicates:
+            - Path=/auth/**
+
+        # Rutas de administración - sin restricciones de roles
+        - id: admin-service
+          uri: lb://arka-gestor-solicitudes
+          predicates:
+            - Path=/api/admin/**
+
+        # Rutas de gestión - sin restricciones de roles
+        - id: gestion-service
+          uri: lb://arka-gestor-solicitudes
+          predicates:
+            - Path=/api/gestion/**
+
+        # Rutas de operaciones - sin restricciones de roles
+        - id: operaciones-service
+          uri: lb://arka-gestor-solicitudes
+          predicates:
+            - Path=/api/operaciones/**
+
+        # Rutas de cálculos - sin restricciones de roles
+        - id: calculos-service
+          uri: lb://arka-gestor-solicitudes
+          predicates:
+            - Path=/api/calculos/**
+
+        - id: cotizador-service
+          uri: lb://arka-cotizador
+          predicates:
+            - Path=/api/cotizador/**
+          filters:
+            - StripPrefix=2
+
+        - id: gestor-solicitudes-service
+          uri: lb://arka-gestor-solicitudes
+          predicates:
+            - Path=/api/gestor/**
+          filters:
+            - StripPrefix=2
+
+        - id: hello-world-service
+          uri: lb://hello-world-service
+          predicates:
+            - Path=/api/hello/**
+          filters:
+            - StripPrefix=2
+
+        # Ruta directa al Eureka Server Dashboard
+        - id: eureka-server
+          uri: http://localhost:8761
+          predicates:
+            - Path=/eureka/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://admin:admin123@localhost:8761/eureka/
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    org.springframework.cloud.loadbalancer: DEBUG
