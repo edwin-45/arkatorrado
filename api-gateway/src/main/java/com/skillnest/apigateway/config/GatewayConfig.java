@@ -11,6 +11,11 @@ public class GatewayConfig {
     @Bean
     public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
         return builder.routes()
+                // Authentication Service routes - IMPORTANTE: Esta ruta faltaba
+                .route("auth-service", r -> r
+                        .path("/auth/**")
+                        .uri("lb://arka-gestor-solicitudes")
+                )
                 // Hello World Service routes
                 .route("hello-world", r -> r
                         .path("/api/hello/**")

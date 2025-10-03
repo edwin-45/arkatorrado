@@ -1,5 +1,6 @@
 package com.skillnest.arkagestorsolicitudes.application.service;
 
+
 import com.skillnest.arkagestorsolicitudes.domain.model.RespuestaProveedor;
 import com.skillnest.arkagestorsolicitudes.domain.model.SolicitudProveedor;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,7 @@ import java.util.ArrayList;
 import java.util.UUID;
 
 @Service
-public class GestorSolicitudesServiceImpl implements GestorSolicitudesService{
+public class GestorSolicitudesServiceImpl implements GestorSolicitudesService {
 
     private final WebClient webClient;
 
@@ -28,7 +29,7 @@ public class GestorSolicitudesServiceImpl implements GestorSolicitudesService{
             if (solicitud.getSolicitudId() == null) {
                 solicitud.setSolicitudId(UUID.randomUUID().toString());
             }
-
+            
             // En una implementación real, guardaríamos en base de datos
             return solicitud;
         });
@@ -39,11 +40,11 @@ public class GestorSolicitudesServiceImpl implements GestorSolicitudesService{
         return Mono.fromCallable(() -> {
             // Simulación de envío a proveedor
             // En una implementación real, haríamos una llamada HTTP al proveedor
-
+            
             // Simulamos una solicitud
             var solicitud = new SolicitudProveedor(solicitudId, proveedorId, "cliente-demo", new ArrayList<>());
             solicitud.setEstado("ENVIADA");
-
+            
             return solicitud;
         });
     }

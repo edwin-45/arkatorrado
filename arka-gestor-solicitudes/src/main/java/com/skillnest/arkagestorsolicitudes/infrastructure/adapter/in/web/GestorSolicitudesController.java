@@ -1,5 +1,6 @@
 package com.skillnest.arkagestorsolicitudes.infrastructure.adapter.in.web;
 
+
 import com.skillnest.arkagestorsolicitudes.application.service.GestorSolicitudesService;
 import com.skillnest.arkagestorsolicitudes.domain.model.RespuestaProveedor;
 import com.skillnest.arkagestorsolicitudes.domain.model.SolicitudProveedor;
@@ -13,6 +14,7 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/solicitudes")
 @CrossOrigin(origins = "*")
 public class GestorSolicitudesController {
+
     private final GestorSolicitudesService gestorService;
 
     @Autowired

@@ -1,28 +1,3 @@
-plugins {
-    id 'java'
-    id 'org.springframework.boot' version '3.5.5'
-    id 'io.spring.dependency-management' version '1.1.7'
-}
-
-group = 'com.skillnest'
-version = '0.0.1-SNAPSHOT'
-description = 'arka-cotizador'
-
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencyManagement {
-    imports {
-        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2023.0.0"
-    }
-}
 
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
@@ -49,6 +24,18 @@ dependencies {
     testImplementation 'org.springframework.security:spring-security-test'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
+jar {
+    enabled = false
+}
+
+bootJar {
+    enabled = true
+    archiveFileName = 'arca-cotizador.jar'
+    // Incluir todas las dependencias para ejecución independiente
+    launchScript()
+}
+
+// Configuración para despliegue en WildFly como JAR independiente
+springBoot {
+    buildInfo()
 }

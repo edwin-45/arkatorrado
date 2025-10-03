@@ -23,10 +23,10 @@ public class GatewayController {
         response.put("description", "API Gateway for ARKA E-commerce Microservices");
 
         Map<String, String> availableServices = new HashMap<>();
-        availableServices.put("Authentication", "/auth/** -> arca-gestor-solicitudes");
-        availableServices.put("Admin", "/api/admin/** -> arca-gestor-solicitudes");
-        availableServices.put("Users", "/api/users/** -> arca-gestor-solicitudes");
-        availableServices.put("Quotes", "/api/cotizacion/** -> arca-cotizador");
+        availableServices.put("Authentication", "/auth/** -> arka-gestor-solicitudes");
+        availableServices.put("Admin", "/api/admin/** -> arka-gestor-solicitudes");
+        availableServices.put("Users", "/api/users/** -> arka-gestor-solicitudes");
+        availableServices.put("Quotes", "/api/cotizacion/** -> arka-cotizador");
         availableServices.put("Main App", "Direct access on port 8888");
 
         response.put("availableServices", availableServices);
@@ -77,28 +77,28 @@ public class GatewayController {
 
         Map<String, String> authRoutes = new HashMap<>();
         authRoutes.put("path", "/auth/**");
-        authRoutes.put("service", "arca-gestor-solicitudes");
+        authRoutes.put("service", "arka-gestor-solicitudes");
         authRoutes.put("description", "Authentication endpoints");
         authRoutes.put("example", "POST /auth/login");
         routes.put("authentication", authRoutes);
 
         Map<String, String> adminRoutes = new HashMap<>();
         adminRoutes.put("path", "/api/admin/**");
-        adminRoutes.put("service", "arca-gestor-solicitudes");
+        adminRoutes.put("service", "arka-gestor-solicitudes");
         adminRoutes.put("description", "Admin management endpoints");
         adminRoutes.put("auth", "Required");
         routes.put("admin", adminRoutes);
 
         Map<String, String> userRoutes = new HashMap<>();
         userRoutes.put("path", "/api/users/**");
-        userRoutes.put("service", "arca-gestor-solicitudes");
+        userRoutes.put("service", "arka-gestor-solicitudes");
         userRoutes.put("description", "User management endpoints");
         userRoutes.put("auth", "Required");
         routes.put("users", userRoutes);
 
         Map<String, String> quotesRoutes = new HashMap<>();
         quotesRoutes.put("path", "/api/cotizacion/**");
-        quotesRoutes.put("service", "arca-cotizador");
+        quotesRoutes.put("service", "arka-cotizador");
         quotesRoutes.put("description", "Quotation service endpoints");
         quotesRoutes.put("auth", "Required");
         routes.put("quotes", quotesRoutes);

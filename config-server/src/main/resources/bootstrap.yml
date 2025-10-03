@@ -1,0 +1,29 @@
+# 🏗️ ARKA Config Server - Bootstrap Configuration NATIVE
+# Configuración inicial - SOLO ARCHIVOS LOCALES
+
+spring:
+  application:
+    name: config-server
+  
+  # ACTIVAR PERFIL NATIVE
+  profiles:
+    active: native
+  
+  # Config Server Bootstrap - SOLO NATIVE
+  cloud:
+    config:
+      server:
+        bootstrap: true
+        # SOLO configuración local de archivos
+        native:
+          search-locations: file:./config-repository,file:../config-repository,classpath:/config
+
+# Server configuration
+server:
+  port: 8888
+
+# Eureka client basic config
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
