@@ -1,1 +1,11 @@
 rootProject.name = 'arkatorrado'
+
+
+// Módulos del proyecto
+include 'arka-cotizador'
+include 'arka-gestor-solicitudes'
+include 'eureka-server'
+include 'api-gateway'
+include 'hello-world-service'
+include 'arka-security-common'
+include 'config-server'

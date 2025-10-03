@@ -1,49 +1,663 @@
 plugins {
     id 'java'
     id 'war'
-    id 'org.springframework.boot' version '3.5.4'
-    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.springframework.boot' version '3.2.3'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'jacoco'
+    id 'org.sonarqube' version '6.0.0.5145'
 }
 
-group = 'com.app'
+// Configuración común para todos los módulos
+allprojects {
+    group = 'com.arka'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+// Configuración para submódulos
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'jacoco'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2023.0.1'
+        }
+    }
+
+    dependencies {
+        implementation 'org.springframework.boot:spring-boot-starter'
+        // implementation 'org.springframework.boot:spring-boot-starter-webflux' // Removido - cada módulo define sus dependencias web
+        implementation 'org.springframework.cloud:spring-cloud-starter-config'
+        implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
+
+        // Spring Security dependencies para todos los módulos
+        implementation 'org.springframework.boot:spring-boot-starter-security'
+        implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+        implementation 'org.springframework.security:spring-security-oauth2-jose'
+        implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+        implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+        implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+        implementation 'org.springframework.security:spring-security-crypto'
+        implementation 'software.amazon.awssdk:regions:2.33.0'
+
+        implementation 'software.amazon.awssdk:s3:2.25.18'
+        implementation 'software.amazon.awssdk:core:2.25.18'
+        implementation 'software.amazon.awssdk:regions:2.25.18'
+        // implementation 'org.springframework.boot:spring-boot-starter-web' // Removido - cada módulo define sus dependencias
+        annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+        testImplementation 'org.springframework.boot:spring-boot-starter-test'
+        testImplementation 'org.springframework.security:spring-security-test'
+        testImplementation 'io.projectreactor:reactor-test'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+
+    tasks.named('test') {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport
+    }
+
+    // 📊 Configuración JaCoCo para submódulos
+    jacoco {
+        toolVersion = "0.8.11"
+    }
+
+    // 🚀 Configuración bootRun con opciones de desarrollo
+    bootRun {
+        // Habilitar live reload automático
+        if (project.hasProperty('dev')) {
+            systemProperty 'spring.profiles.active', 'dev'
+            systemProperty 'spring.devtools.restart.enabled', 'true'
+            systemProperty 'spring.devtools.livereload.enabled', 'true'
+        }
+
+        // Configurar memoria JVM para desarrollo
+        jvmArgs = [
+                '-Xmx1024m',
+                '-Xms512m',
+                '-XX:+UseG1GC',
+                '-XX:+UseStringDeduplication'
+        ]
+
+        // Permitir debug remoto
+        if (project.hasProperty('debug')) {
+            jvmArgs += [
+                    '-Xdebug',
+                    '-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005'
+            ]
+        }
+    }
+
+    jacocoTestReport {
+        dependsOn test
+        reports {
+            xml.required = true
+            html.required = true
+            csv.required = false
+        }
+
+        // Exclusiones específicas para cada submódulo
+        afterEvaluate {
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: [
+                        '**/config/**',
+                        '**/dto/**',
+                        '**/*Application*',
+                        '**/Vulnerable*',
+                        '**/CodeSmells*'
+                ])
+            }))
+        }
+    }
+
+    jacocoTestCoverageVerification {
+        violationRules {
+            rule {
+                limit {
+                    minimum = 0.60 // 60% mínimo de cobertura
+                }
+            }
+        }
+    }
+}
+
+// ===============================================
+// 🚀 TAREAS GRADLE PARA BOOTRUN OPTIMIZADO
+// ===============================================
+
+// Tarea para iniciar todos los servicios en orden
+task startAllServices {
+    description = 'Inicia todos los microservicios en el orden correcto'
+    group = 'Arka Deployment'
+
+    doLast {
+        println "🚀 Iniciando todos los microservicios..."
+        println "📋 Orden de inicio: Config Server -> Eureka -> Gateway -> Servicios"
+        println "💡 Tip: Usa Ctrl+C para detener cada servicio individualmente"
+
+        // Ejecutar script PowerShell
+        if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+            exec {
+                commandLine 'powershell', '-ExecutionPolicy', 'Bypass', '-File', './start-all-services.ps1'
+            }
+        } else {
+            exec {
+                commandLine 'bash', './start-all-services.sh'
+            }
+        }
+    }
+}
+
+// Tarea para verificar health de servicios
+task checkHealth {
+    description = 'Verifica el health de todos los microservicios'
+    group = 'Arka Deployment'
+
+    doLast {
+        println "🔍 Verificando health de todos los servicios..."
+
+        if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+            exec {
+                commandLine 'powershell', '-ExecutionPolicy', 'Bypass', '-File', './check-services-health.ps1'
+            }
+        } else {
+            println "❗ Health check automático disponible solo en Windows. Use curl manualmente."
+        }
+    }
+}
+
+// Tarea para detener todos los servicios
+task stopAllServices {
+    description = 'Detiene todos los microservicios'
+    group = 'Arka Deployment'
+
+    doLast {
+        println "🛑 Deteniendo todos los microservicios..."
+
+        if (System.getProperty('os.name').toLowerCase().contains('windows')) {
+            exec {
+                commandLine 'powershell', '-ExecutionPolicy', 'Bypass', '-File', './stop-all-services.ps1'
+            }
+        } else {
+            exec {
+                commandLine 'pkill', '-f', 'gradle.*bootRun'
+            }
+        }
+    }
+}
+
+// Tareas específicas para cada servicio con configuración optimizada
+['config-server', 'eureka-server', 'api-gateway', 'hello-world-service', 'arca-cotizador', 'arca-gestor-solicitudes'].each { serviceName ->
+
+    // Tarea para ejecutar servicio en modo desarrollo
+    task "start${serviceName.split('-').collect { it.capitalize() }.join('')}Dev" {
+        description = "Inicia ${serviceName} en modo desarrollo con live reload"
+        group = 'Arka Development'
+
+        doLast {
+            println "🚀 Iniciando ${serviceName} en modo desarrollo..."
+
+            exec {
+                commandLine './gradlew', ":${serviceName}:bootRun", "-Pdev", "-Pdebug"
+            }
+        }
+    }
+
+    // Tarea para ejecutar servicio standalone (sin Eureka)
+    task "start${serviceName.split('-').collect { it.capitalize() }.join('')}Standalone" {
+        description = "Inicia ${serviceName} en modo standalone (sin Eureka)"
+        group = 'Arka Development'
+
+        doLast {
+            println "🔧 Iniciando ${serviceName} en modo standalone..."
+
+            exec {
+                commandLine './gradlew', ":${serviceName}:bootRun",
+                        "--args=--eureka.client.enabled=false --spring.profiles.active=standalone"
+            }
+        }
+    }
+}
+
+// Tarea para compilación continua
+task continuousBuild {
+    description = 'Inicia compilación continua para desarrollo'
+    group = 'Arka Development'
+
+    doLast {
+        println "🔄 Iniciando compilación continua..."
+        println "💡 Los cambios se recompilarán automáticamente"
+
+        exec {
+            commandLine './gradlew', 'classes', '--continuous'
+        }
+    }
+}
+
+// Tarea para generar reporte de dependencias
+task dependencyReport {
+    description = 'Genera reporte de dependencias de todos los módulos'
+    group = 'Arka Reports'
+
+    doLast {
+        println "📊 Generando reporte de dependencias..."
+
+        subprojects.each { subproject ->
+            println "\n🔍 Dependencias de ${subproject.name}:"
+            subproject.configurations.compileClasspath.each { dep ->
+                if (!dep.name.endsWith('.jar')) return
+                println "   └─ ${dep.name}"
+            }
+        }
+    }
+}
+
+// Configuración específica del módulo principal
+group = 'com.arka'
 version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
-configurations {
-    compileOnly {
-        extendsFrom annotationProcessor
+dependencyManagement {
+    imports {
+        mavenBom 'org.springframework.cloud:spring-cloud-dependencies:2023.0.1'
     }
-}
-
-repositories {
-    mavenCentral()
 }
 
 dependencies {
-    // Spring Boot Starters
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    // Dependencias específicas se definen en cada módulo
+    // Removidas las dependencias globales web/webflux que causaban conflictos
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'software.amazon.awssdk:regions:2.33.0'
+    implementation 'software.amazon.awssdk:s3:2.25.18'
+    implementation 'software.amazon.awssdk:core:2.25.18'
+    implementation 'software.amazon.awssdk:regions:2.25.18'
+    // implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc' // Comentado temporalmente
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.cloud:spring-cloud-starter-bootstrap'
 
-    // Base de datos
+    // 🍃 MongoDB dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+
+    // 📧 Email dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+
+    // Spring Security dependencies
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.security:spring-security-oauth2-resource-server'
+    implementation 'org.springframework.security:spring-security-oauth2-jose'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+    implementation 'org.springframework.security:spring-security-crypto'
+
+    // Database dependencies
     runtimeOnly 'com.mysql:mysql-connector-j'
-
-    // Testing
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'com.h2database:h2'
     testRuntimeOnly 'com.h2database:h2'
 
-    // Utilidades
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
-
-    // WAR deployment
     providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'io.projectreactor:reactor-test' // Para StepVerifier
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+// 📊 Configuración JaCoCo principal
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/config/**',
+                    '**/dto/**',
+                    '**/*Application*',
+                    '**/Vulnerable*',
+                    '**/CodeSmells*'
+            ])
+        }))
+    }
+}
+
+jacocoTestCoverageVerification {
+    violationRules {
+        rule {
+            limit {
+                minimum = 0.60
+            }
+        }
+    }
+}
+
+// 📊 Task para reporte agregado de cobertura
+task jacocoAggregatedReport(type: JacocoReport) {
+    dependsOn subprojects.test
+
+    description = 'Generates an aggregated code coverage report from all subprojects'
+    group = 'verification'
+
+    additionalSourceDirs.from files(subprojects.sourceSets.main.allSource.srcDirs)
+    sourceDirectories.from files(subprojects.sourceSets.main.allSource.srcDirs)
+    classDirectories.from files(subprojects.sourceSets.main.output)
+    executionData.from files(subprojects.jacocoTestReport.executionData)
+
+    reports {
+        html.required = true
+        xml.required = true
+        csv.required = false
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/aggregate/html')
+        xml.outputLocation = layout.buildDirectory.file('reports/jacoco/aggregate/jacocoTestReport.xml')
+    }
+
+    // Exclusiones para el reporte agregado
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/config/**',
+                    '**/dto/**',
+                    '**/*Application*',
+                    '**/Vulnerable*',
+                    '**/CodeSmells*',
+                    '**/test/**'
+            ])
+        }))
+    }
+}
+
+// 🔍 Configuración SonarQube
+sonarqube {
+    properties {
+        property "sonar.projectKey", "arkavalenzuela"
+        property "sonar.projectName", "Arka Valenzuela"
+        property "sonar.projectVersion", version
+        property "sonar.sourceEncoding", "UTF-8"
+        property "sonar.sources", "src/main/java"
+        property "sonar.tests", "src/test/java"
+        property "sonar.java.coveragePlugin", "jacoco"
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/aggregate/jacocoTestReport.xml"
+        property "sonar.junit.reportPaths", "build/test-results/test"
+        property "sonar.exclusions", "**/Vulnerable*.java,**/CodeSmells*.java,**/config/**,**/dto/**,**/*Application*.java"
+        property "sonar.coverage.exclusions", "**/Vulnerable*.java,**/CodeSmells*.java,**/config/**,**/dto/**,**/*Application*.java"
+    }
+}
+
+// 🚀 PIPELINE PRINCIPAL - TASK RUNMAIN CON MÚLTIPLES STAGES
+task runMain {
+    group = 'application'
+    description = 'Ejecuta el pipeline completo de build con múltiples stages'
+
+    doLast {
+        println """
+		🚀 ====================================================
+		    INICIANDO PIPELINE PRINCIPAL ARKA VALENZUELA
+		🚀 ====================================================
+		"""
+    }
+}
+
+// 🧹 STAGE 1: Limpieza
+task stageClean {
+    group = 'pipeline'
+    description = 'Stage 1: Limpia todos los artefactos de build anteriores'
+    dependsOn clean
+
+    doFirst {
+        println """
+		🧹 ==================== STAGE 1 ====================
+		    LIMPIEZA DE ARTEFACTOS
+		🧹 ===================================================
+		"""
+    }
+
+    doLast {
+        println "✅ Stage 1 Completado: Limpieza exitosa"
+    }
+}
+
+// 🔧 STAGE 2: Compilación
+task stageCompile {
+    group = 'pipeline'
+    description = 'Stage 2: Compila el código fuente de todos los módulos'
+    dependsOn stageClean, compileJava
+    mustRunAfter stageClean
+
+    doFirst {
+        println """
+		🔧 ==================== STAGE 2 ====================
+		    COMPILACIÓN DEL CÓDIGO FUENTE
+		🔧 ===================================================
+		"""
+    }
+
+    doLast {
+        println "✅ Stage 2 Completado: Compilación exitosa"
+    }
+}
+
+// 🧪 STAGE 3: Testing
+task stageTesting {
+    group = 'pipeline'
+    description = 'Stage 3: Ejecuta todos los tests unitarios e integración'
+    dependsOn stageCompile, test
+    mustRunAfter stageCompile
+
+    doFirst {
+        println """
+		🧪 ==================== STAGE 3 ====================
+		    EJECUCIÓN DE TESTS
+		🧪 ===================================================
+		"""
+    }
+
+    doLast {
+        println "✅ Stage 3 Completado: Tests ejecutados correctamente"
+    }
+}
+
+// 📊 STAGE 4: Análisis de Cobertura
+task stageCoverage {
+    group = 'pipeline'
+    description = 'Stage 4: Genera reportes de cobertura con JaCoCo'
+    dependsOn stageTesting, jacocoTestReport, jacocoAggregatedReport
+    mustRunAfter stageTesting
+
+    doFirst {
+        println """
+		📊 ==================== STAGE 4 ====================
+		    ANÁLISIS DE COBERTURA DE CÓDIGO
+		📊 ===================================================
+		"""
+    }
+
+    doLast {
+        println "✅ Stage 4 Completado: Reportes de cobertura generados"
+        println "📄 Reporte HTML: build/reports/jacoco/aggregate/html/index.html"
+    }
+}
+
+// 🔍 STAGE 5: Análisis de Calidad
+task stageQuality {
+    group = 'pipeline'
+    description = 'Stage 5: Ejecuta análisis de calidad de código'
+    dependsOn stageCoverage, jacocoTestCoverageVerification
+    mustRunAfter stageCoverage
+
+    doFirst {
+        println """
+		🔍 ==================== STAGE 5 ====================
+		    ANÁLISIS DE CALIDAD DE CÓDIGO
+		🔍 ===================================================
+		"""
+    }
+
+    doLast {
+        println "✅ Stage 5 Completado: Verificación de calidad exitosa"
+    }
+}
+
+// 📦 STAGE 6: Empaquetado
+task stagePackage {
+    group = 'pipeline'
+    description = 'Stage 6: Genera artefactos ejecutables (JAR/WAR)'
+    dependsOn stageQuality, build, bootJar
+    mustRunAfter stageQuality
+
+    doFirst {
+        println """
+		📦 ==================== STAGE 6 ====================
+		    EMPAQUETADO DE ARTEFACTOS
+		📦 ===================================================
+		"""
+    }
+
+    doLast {
+        println "✅ Stage 6 Completado: Artefactos generados correctamente"
+        println "📄 JAR Principal: build/libs/${project.name}-${version}.jar"
+    }
+}
+
+// 🐳 STAGE 7: Preparación Docker
+task stageDocker {
+    group = 'pipeline'
+    description = 'Stage 7: Prepara imágenes Docker (opcional)'
+    dependsOn stagePackage
+    mustRunAfter stagePackage
+
+    doFirst {
+        println """
+		🐳 ==================== STAGE 7 ====================
+		    PREPARACIÓN DE CONTENEDORES DOCKER
+		🐳 ===================================================
+		"""
+    }
+
+    doLast {
+        println "✅ Stage 7 Completado: Preparación Docker lista"
+        println "💡 Ejecuta: docker-compose build para crear imágenes"
+    }
+}
+
+// 📋 STAGE 8: Reporte Final
+task stageFinalReport {
+    group = 'pipeline'
+    description = 'Stage 8: Genera reporte final del pipeline'
+    dependsOn stageDocker
+    mustRunAfter stageDocker
+
+    doFirst {
+        println """
+		📋 ==================== STAGE 8 ====================
+		    REPORTE FINAL DEL PIPELINE
+		📋 ===================================================
+		"""
+    }
+
+    doLast {
+        println """
+		🎉 ====================================================
+		    PIPELINE COMPLETADO EXITOSAMENTE
+		🎉 ====================================================
+		
+		📊 RESUMEN DE ARTEFACTOS GENERADOS:
+		   • JAR Principal: build/libs/${project.name}-${version}.jar
+		   • Reportes de Tests: build/reports/tests/test/index.html
+		   • Cobertura HTML: build/reports/jacoco/aggregate/html/index.html
+		   • Cobertura XML: build/reports/jacoco/aggregate/jacocoTestReport.xml
+		
+		🚀 PRÓXIMOS PASOS:
+		   • Revisar reportes de cobertura
+		   • Ejecutar SonarQube: ./gradlew sonarqube
+		   • Desplegar con Docker: docker-compose up
+		
+		✅ BUILD EXITOSO - TODOS LOS STAGES COMPLETADOS
+		"""
+    }
+}
+
+// 🔗 Configurar dependencias del runMain
+runMain.dependsOn stageFinalReport
+
+// 🎯 TASKS AUXILIARES PARA DESARROLLADORES
+
+// 🧪 Task para solo testing
+task runTests {
+    group = 'application'
+    description = 'Ejecuta solo los stages de testing y cobertura'
+    dependsOn stageCoverage
+
+    doLast {
+        println "🧪 Testing pipeline completado"
+    }
+}
+
+// 🔍 Task para análisis de calidad completo
+task runQuality {
+    group = 'application'
+    description = 'Ejecuta análisis completo de calidad con SonarQube'
+    dependsOn stageQuality, sonarqube
+
+    doLast {
+        println "🔍 Análisis de calidad completo enviado a SonarQube"
+    }
+}
+
+// ⚡ Task para build rápido (sin tests)
+task runFast {
+    group = 'application'
+    description = 'Build rápido sin tests para desarrollo'
+    dependsOn stageCompile, build
+
+    doLast {
+        println "⚡ Build rápido completado (sin tests)"
+    }
+}
+
+// 📊 Task para solo reportes
+task runReports {
+    group = 'application'
+    description = 'Genera solo reportes de cobertura y calidad'
+    dependsOn test, jacocoTestReport, jacocoAggregatedReport
+
+    doLast {
+        println """
+		📊 Reportes generados:
+		   • HTML: build/reports/jacoco/aggregate/html/index.html
+		   • XML: build/reports/jacoco/aggregate/jacocoTestReport.xml
+		"""
+    }
 }

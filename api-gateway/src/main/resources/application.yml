@@ -11,35 +11,60 @@ spring:
           enabled: true
           lower-case-service-id: true
       routes:
-        # Rutas de autenticación - ahora sin filtros de seguridad
+        # Rutas de autenticación - públicas (sin autenticación)
         - id: auth-service
           uri: lb://arka-gestor-solicitudes
           predicates:
             - Path=/auth/**
+          filters:
+            - name: AddRequestHeader
+              args:
+                name: X-Request-Type
+                value: AUTH
 
-        # Rutas de administración - sin restricciones de roles
+        # Rutas de administración - solo administradores
         - id: admin-service
           uri: lb://arka-gestor-solicitudes
           predicates:
             - Path=/api/admin/**
+          filters:
+            - name: AddRequestHeader
+              args:
+                name: X-Required-Role
+                value: ADMINISTRADOR
 
-        # Rutas de gestión - sin restricciones de roles
+        # Rutas de gestión - administradores y gestores
         - id: gestion-service
           uri: lb://arka-gestor-solicitudes
           predicates:
             - Path=/api/gestion/**
+          filters:
+            - name: AddRequestHeader
+              args:
+                name: X-Required-Roles
+                value: ADMINISTRADOR,GESTOR
 
-        # Rutas de operaciones - sin restricciones de roles
+        # Rutas de operaciones - administradores, gestores y operadores
         - id: operaciones-service
           uri: lb://arka-gestor-solicitudes
           predicates:
             - Path=/api/operaciones/**
+          filters:
+            - name: AddRequestHeader
+              args:
+                name: X-Required-Roles
+                value: ADMINISTRADOR,GESTOR,OPERADOR
 
-        # Rutas de cálculos - sin restricciones de roles
+        # Rutas de cálculos - todos los roles autenticados
         - id: calculos-service
           uri: lb://arka-gestor-solicitudes
           predicates:
             - Path=/api/calculos/**
+          filters:
+            - name: AddRequestHeader
+              args:
+                name: X-Required-Roles
+                value: ADMINISTRADOR,GESTOR,OPERADOR,USUARIO
 
         - id: cotizador-service
           uri: lb://arka-cotizador
@@ -47,6 +72,10 @@ spring:
             - Path=/api/cotizador/**
           filters:
             - StripPrefix=2
+            - name: AddRequestHeader
+              args:
+                name: X-Required-Roles
+                value: ADMINISTRADOR,GESTOR,OPERADOR,USUARIO
 
         - id: gestor-solicitudes-service
           uri: lb://arka-gestor-solicitudes
@@ -54,6 +83,10 @@ spring:
             - Path=/api/gestor/**
           filters:
             - StripPrefix=2
+            - name: AddRequestHeader
+              args:
+                name: X-Required-Roles
+                value: ADMINISTRADOR,GESTOR
 
         - id: hello-world-service
           uri: lb://hello-world-service
@@ -71,12 +104,11 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://admin:admin123@localhost:8761/eureka/
+      defaultZone: http://localhost:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
   instance:
     prefer-ip-address: true
-    instance-id: ${spring.application.name}:${server.port}
 
 management:
   endpoints:

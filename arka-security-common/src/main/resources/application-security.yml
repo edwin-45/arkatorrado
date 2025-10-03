@@ -1,0 +1,27 @@
+# Configuración de seguridad para ARKA Security
+spring:
+  security:
+    user:
+      name: admin
+      password: admin123
+      roles: USER,ADMIN
+    jwt:
+      secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+      expiration: 86400
+      refresh-expiration: 604800
+
+# Configuración H2 para desarrollo
+  r2dbc:
+    url: r2dbc:h2:mem:///arkasecurity?options=DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password: password
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+# Configuración de logging
+logging:
+  level:
+    com.arka.security: DEBUG
+    org.springframework.security: DEBUG
