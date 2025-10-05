@@ -13,7 +13,7 @@ public class Product {
 
     public Product() {}
 
-    public Product(Long id, String nombre, String descripcion, Category categoria,
+    public Product(Long id, String nombre, String descripcion, Category categoria, 
                    String marca, BigDecimal precioUnitario, Integer stock) {
         this.id = id;
         this.nombre = nombre;

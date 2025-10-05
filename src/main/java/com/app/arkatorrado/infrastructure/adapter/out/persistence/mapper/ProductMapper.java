@@ -6,6 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ProductMapper {
+
     private final CategoryMapper categoryMapper;
 
     public ProductMapper(CategoryMapper categoryMapper) {
@@ -16,7 +17,7 @@ public class ProductMapper {
         if (entity == null) {
             return null;
         }
-
+        
         Product product = new Product();
         product.setId(entity.getProductoId());
         product.setNombre(entity.getNombre());
@@ -25,7 +26,7 @@ public class ProductMapper {
         product.setMarca(entity.getMarca());
         product.setPrecioUnitario(entity.getPrecioUnitario());
         product.setStock(entity.getStock());
-
+        
         return product;
     }
 
@@ -33,7 +34,7 @@ public class ProductMapper {
         if (domain == null) {
             return null;
         }
-
+        
         ProductEntity entity = new ProductEntity();
         entity.setProductoId(domain.getId());
         entity.setNombre(domain.getNombre());
@@ -42,7 +43,7 @@ public class ProductMapper {
         entity.setMarca(domain.getMarca());
         entity.setPrecioUnitario(domain.getPrecioUnitario());
         entity.setStock(domain.getStock());
-
+        
         return entity;
     }
 }

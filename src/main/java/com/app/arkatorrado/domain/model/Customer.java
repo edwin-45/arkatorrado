@@ -26,8 +26,8 @@ public class Customer {
 
     public boolean hasCompleteProfile() {
         return nombre != null && !nombre.trim().isEmpty() &&
-                email != null && !email.trim().isEmpty() &&
-                isValidEmail();
+               email != null && !email.trim().isEmpty() &&
+               isValidEmail();
     }
 
     // Getters y Setters

@@ -24,20 +24,20 @@ public class OrderMapper {
         if (entity == null) {
             return null;
         }
-
+        
         Order order = new Order();
         order.setId(entity.getPedidoId());
         order.setCliente(customerMapper.toDomain(entity.getCliente()));
         order.setFecha(entity.getFecha());
         order.setTotal(entity.getTotal());
-
+        
         if (entity.getProductos() != null) {
             Set<Product> productos = entity.getProductos().stream()
                     .map(productMapper::toDomain)
                     .collect(Collectors.toSet());
             order.setProductos(productos);
         }
-
+        
         return order;
     }
 
@@ -45,20 +45,20 @@ public class OrderMapper {
         if (domain == null) {
             return null;
         }
-
+        
         OrderEntity entity = new OrderEntity();
         entity.setPedidoId(domain.getId());
         entity.setCliente(customerMapper.toEntity(domain.getCliente()));
         entity.setFecha(domain.getFecha());
         entity.setTotal(domain.getTotal());
-
+        
         if (domain.getProductos() != null) {
             Set<ProductEntity> productos = domain.getProductos().stream()
                     .map(productMapper::toEntity)
                     .collect(Collectors.toSet());
             entity.setProductos(productos);
         }
-
+        
         return entity;
     }
 }

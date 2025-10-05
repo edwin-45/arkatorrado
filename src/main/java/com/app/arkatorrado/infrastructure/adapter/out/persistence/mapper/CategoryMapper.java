@@ -6,15 +6,16 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CategoryMapper {
+
     public Category toDomain(CategoryEntity entity) {
         if (entity == null) {
             return null;
         }
-
+        
         Category category = new Category();
         category.setId(entity.getCategoriaId());
         category.setNombre(entity.getNombre());
-
+        
         return category;
     }
 
@@ -22,11 +23,11 @@ public class CategoryMapper {
         if (domain == null) {
             return null;
         }
-
+        
         CategoryEntity entity = new CategoryEntity();
         entity.setCategoriaId(domain.getId());
         entity.setNombre(domain.getNombre());
-
+        
         return entity;
     }
 }

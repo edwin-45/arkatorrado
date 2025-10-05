@@ -26,7 +26,7 @@ public class Order {
         if (productos == null || productos.isEmpty()) {
             return BigDecimal.ZERO;
         }
-
+        
         return productos.stream()
                 .map(Product::getPrecioUnitario)
                 .filter(precio -> precio != null)
@@ -34,11 +34,11 @@ public class Order {
     }
 
     public boolean isValidOrder() {
-        return cliente != null &&
-                productos != null &&
-                !productos.isEmpty() &&
-                total != null &&
-                total.compareTo(BigDecimal.ZERO) > 0;
+        return cliente != null && 
+               productos != null && 
+               !productos.isEmpty() && 
+               total != null && 
+               total.compareTo(BigDecimal.ZERO) > 0;
     }
 
     public void addProduct(Product product) {

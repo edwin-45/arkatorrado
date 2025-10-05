@@ -1,16 +1,22 @@
 package com.app.arkatorrado.infrastructure.config;
 
-import com.app.arkatorrado.application.usecase.*;
 import com.app.arkatorrado.domain.port.in.*;
 import com.app.arkatorrado.domain.port.out.*;
+import com.app.arkatorrado.application.usecase.*;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Bean Configuration for Hexagonal Architecture
+ * This class configures the dependency injection for the application layer
+ * Following Hexagonal Architecture - Configuration Layer
+ */
 @Configuration
 public class BeanConfiguration {
+
     @Bean
-    public ProductUseCase productUseCase(ProductRepositoryPort productRepository,
-                                         CategoryRepositoryPort categoryRepository) {
+    public ProductUseCase productUseCase(ProductRepositoryPort productRepository, 
+                                       CategoryRepositoryPort categoryRepository) {
         return new ProductApplicationService(productRepository, categoryRepository);
     }
 

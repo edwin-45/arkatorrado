@@ -1,12 +1,12 @@
 package com.app.arkatorrado.infrastructure.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
-
 import java.util.List;
 
 @Entity
 @Table(name = "categorias")
 public class CategoryEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "categoria_id")

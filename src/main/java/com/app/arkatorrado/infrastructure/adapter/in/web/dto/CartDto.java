@@ -1,25 +1,35 @@
 package com.app.arkatorrado.infrastructure.adapter.in.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.time.LocalDateTime;
 
+/**
+ * Data Transfer Object for Cart
+ * Used for REST API communication
+ */
 public class CartDto {
+    
     private Long id;
-    private Long clienteId;  // Simplificamos usando solo el ID del cliente
+    private Long clienteId;
+    private String clienteNombre;
+    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime fechaCreacion;
+    
     private String estado;
 
-    // Constructor vacío
     public CartDto() {}
 
-    // Constructor completo
-    public CartDto(Long id, Long clienteId, LocalDateTime fechaCreacion, String estado) {
+    public CartDto(Long id, Long clienteId, String clienteNombre, LocalDateTime fechaCreacion, String estado) {
         this.id = id;
         this.clienteId = clienteId;
+        this.clienteNombre = clienteNombre;
         this.fechaCreacion = fechaCreacion;
         this.estado = estado;
     }
 
-    // Getters y Setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -36,6 +46,14 @@ public class CartDto {
         this.clienteId = clienteId;
     }
 
+    public String getClienteNombre() {
+        return clienteNombre;
+    }
+
+    public void setClienteNombre(String clienteNombre) {
+        this.clienteNombre = clienteNombre;
+    }
+
     public LocalDateTime getFechaCreacion() {
         return fechaCreacion;
     }
@@ -50,5 +68,16 @@ public class CartDto {
 
     public void setEstado(String estado) {
         this.estado = estado;
+    }
+
+    @Override
+    public String toString() {
+        return "CartDto{" +
+                "id=" + id +
+                ", clienteId=" + clienteId +
+                ", clienteNombre='" + clienteNombre + '\'' +
+                ", fechaCreacion=" + fechaCreacion +
+                ", estado='" + estado + '\'' +
+                '}';
     }
 }

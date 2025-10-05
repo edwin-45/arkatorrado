@@ -3,39 +3,53 @@ package com.app.arkatorrado.infrastructure.adapter.in.web.mapper;
 import com.app.arkatorrado.domain.model.Cart;
 import com.app.arkatorrado.domain.model.Customer;
 import com.app.arkatorrado.infrastructure.adapter.in.web.dto.CartDto;
+import org.springframework.stereotype.Component;
 
+/**
+ * Mapper between Cart domain model and CartDto
+ * Converts between domain and web layer representations
+ */
+@Component
 public class CartWebMapper {
+
     /**
-     * Convierte un objeto Cart del dominio a un CartDto
+     * Convert Cart domain model to CartDto
      */
-    public static CartDto toDto(Cart cart) {
+    public CartDto toDto(Cart cart) {
         if (cart == null) {
             return null;
         }
 
-        CartDto cartDto = new CartDto();
-        cartDto.setId(cart.getId());
-        cartDto.setClienteId(cart.getCliente() != null ? cart.getCliente().getId() : null);
-        cartDto.setFechaCreacion(cart.getFechaCreacion());
-        cartDto.setEstado(cart.getEstado());
-
-        return cartDto;
+        return new CartDto(
+                cart.getId(),
+                cart.getCliente() != null ? cart.getCliente().getId() : null,
+                cart.getCliente() != null ? cart.getCliente().getNombre() : null,
+                cart.getFechaCreacion(),
+                cart.getEstado()
+        );
     }
 
     /**
-     * Convierte un CartDto a un objeto Cart del dominio
-     * Requiere un objeto Customer completo para la conversión
+     * Convert CartDto to Cart domain model
      */
-    public static Cart toDomain(CartDto cartDto, Customer cliente) {
+    public Cart toDomain(CartDto cartDto) {
         if (cartDto == null) {
             return null;
         }
 
         Cart cart = new Cart();
         cart.setId(cartDto.getId());
-        cart.setCliente(cliente);
         cart.setFechaCreacion(cartDto.getFechaCreacion());
         cart.setEstado(cartDto.getEstado());
+
+        // For simplicity, we create a minimal Customer object
+        // In a real application, you might need to fetch the full Customer from a repository
+        if (cartDto.getClienteId() != null) {
+            Customer customer = new Customer();
+            customer.setId(cartDto.getClienteId());
+            customer.setNombre(cartDto.getClienteNombre());
+            cart.setCliente(customer);
+        }
 
         return cart;
     }

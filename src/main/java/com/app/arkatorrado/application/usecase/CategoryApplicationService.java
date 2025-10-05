@@ -6,8 +6,13 @@ import com.app.arkatorrado.domain.port.out.CategoryRepositoryPort;
 
 import java.util.List;
 
+/**
+ * Application Service for Category Use Cases
+ * This class orchestrates the business logic for Category operations
+ * Following Hexagonal Architecture - Application Layer
+ */
 public class CategoryApplicationService implements CategoryUseCase {
-
+    
     private final CategoryRepositoryPort categoryRepository;
 
     public CategoryApplicationService(CategoryRepositoryPort categoryRepository) {
@@ -56,11 +61,11 @@ public class CategoryApplicationService implements CategoryUseCase {
         if (category == null) {
             throw new IllegalArgumentException("Category cannot be null");
         }
-
+        
         if (category.getNombre() == null || category.getNombre().trim().isEmpty()) {
             throw new IllegalArgumentException("Category name cannot be null or empty");
         }
-
+        
         if (category.getNombre().length() > 100) {
             throw new IllegalArgumentException("Category name cannot exceed 100 characters");
         }

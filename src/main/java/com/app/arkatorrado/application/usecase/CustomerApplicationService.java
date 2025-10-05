@@ -1,6 +1,5 @@
 package com.app.arkatorrado.application.usecase;
 
-
 import com.app.arkatorrado.domain.model.Customer;
 import com.app.arkatorrado.domain.port.in.CustomerUseCase;
 import com.app.arkatorrado.domain.port.out.CustomerRepositoryPort;
@@ -9,8 +8,13 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Application Service for Customer Use Cases
+ * This class orchestrates the business logic for Customer operations
+ * Following Hexagonal Architecture - Application Layer
+ */
 public class CustomerApplicationService implements CustomerUseCase {
-
+    
     private final CustomerRepositoryPort customerRepository;
 
     public CustomerApplicationService(CustomerRepositoryPort customerRepository) {

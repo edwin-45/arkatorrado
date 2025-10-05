@@ -6,11 +6,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class CustomerWebMapper {
+
     public CustomerDto toDto(Customer domain) {
         if (domain == null) {
             return null;
         }
-
+        
         CustomerDto dto = new CustomerDto();
         dto.setId(domain.getId());
         dto.setNombre(domain.getNombre());
@@ -18,7 +19,7 @@ public class CustomerWebMapper {
         dto.setTelefono(domain.getTelefono());
         dto.setPais(domain.getPais());
         dto.setCiudad(domain.getCiudad());
-
+        
         return dto;
     }
 
@@ -26,7 +27,7 @@ public class CustomerWebMapper {
         if (dto == null) {
             return null;
         }
-
+        
         Customer customer = new Customer();
         customer.setId(dto.getId());
         customer.setNombre(dto.getNombre());
@@ -34,7 +35,7 @@ public class CustomerWebMapper {
         customer.setTelefono(dto.getTelefono());
         customer.setPais(dto.getPais());
         customer.setCiudad(dto.getCiudad());
-
+        
         return customer;
     }
 }

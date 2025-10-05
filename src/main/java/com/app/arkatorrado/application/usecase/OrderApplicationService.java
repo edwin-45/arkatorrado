@@ -1,16 +1,21 @@
 package com.app.arkatorrado.application.usecase;
 
-import com.app.arkatorrado.domain.model.Customer;
 import com.app.arkatorrado.domain.model.Order;
 import com.app.arkatorrado.domain.model.Product;
+import com.app.arkatorrado.domain.model.Customer;
 import com.app.arkatorrado.domain.port.in.OrderUseCase;
 import com.app.arkatorrado.domain.port.out.OrderRepositoryPort;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Application Service for Order Use Cases
+ * This class orchestrates the business logic for Order operations
+ * Following Hexagonal Architecture - Application Layer
+ */
 public class OrderApplicationService implements OrderUseCase {
-
+    
     private final OrderRepositoryPort orderRepository;
 
     public OrderApplicationService(OrderRepositoryPort orderRepository) {

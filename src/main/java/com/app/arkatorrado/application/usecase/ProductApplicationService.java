@@ -2,20 +2,26 @@ package com.app.arkatorrado.application.usecase;
 
 import com.app.arkatorrado.domain.model.Product;
 import com.app.arkatorrado.domain.port.in.ProductUseCase;
-import com.app.arkatorrado.domain.port.out.CategoryRepositoryPort;
 import com.app.arkatorrado.domain.port.out.ProductRepositoryPort;
+import com.app.arkatorrado.domain.port.out.CategoryRepositoryPort;
 
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Application Service for Product Use Cases
+ * This class orchestrates the business logic for Product operations
+ * Following Hexagonal Architecture - Application Layer
+ */
 public class ProductApplicationService implements ProductUseCase {
+    
     private final ProductRepositoryPort productRepository;
     private final CategoryRepositoryPort categoryRepository;
 
-    public ProductApplicationService(ProductRepositoryPort productRepository,
-                                     CategoryRepositoryPort categoryRepository) {
+    public ProductApplicationService(ProductRepositoryPort productRepository, 
+                                   CategoryRepositoryPort categoryRepository) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
     }

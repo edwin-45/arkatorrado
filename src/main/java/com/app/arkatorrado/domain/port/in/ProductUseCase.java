@@ -1,7 +1,6 @@
 package com.app.arkatorrado.domain.port.in;
 
 import com.app.arkatorrado.domain.model.Product;
-
 import java.math.BigDecimal;
 import java.util.List;
 

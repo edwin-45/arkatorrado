@@ -1,7 +1,6 @@
 package com.app.arkatorrado.domain.port.in;
 
 import com.app.arkatorrado.domain.model.Cart;
-
 import java.util.List;
 
 public interface CartUseCase {

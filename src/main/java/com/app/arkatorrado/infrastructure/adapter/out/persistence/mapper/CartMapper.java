@@ -17,13 +17,13 @@ public class CartMapper {
         if (entity == null) {
             return null;
         }
-
+        
         Cart cart = new Cart();
         cart.setId(entity.getCarritoId());
         cart.setCliente(customerMapper.toDomain(entity.getCliente()));
         cart.setFechaCreacion(entity.getFechaCreacion());
         cart.setEstado(entity.getEstado());
-
+        
         return cart;
     }
 
@@ -31,13 +31,13 @@ public class CartMapper {
         if (domain == null) {
             return null;
         }
-
+        
         CartEntity entity = new CartEntity();
         entity.setCarritoId(domain.getId());
         entity.setCliente(customerMapper.toEntity(domain.getCliente()));
         entity.setFechaCreacion(domain.getFechaCreacion());
         entity.setEstado(domain.getEstado());
-
+        
         return entity;
     }
 }

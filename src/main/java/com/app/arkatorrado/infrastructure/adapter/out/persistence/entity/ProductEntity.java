@@ -1,12 +1,12 @@
 package com.app.arkatorrado.infrastructure.adapter.out.persistence.entity;
 
 import jakarta.persistence.*;
-
 import java.math.BigDecimal;
 
 @Entity
 @Table(name = "productos")
 public class ProductEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "producto_id")

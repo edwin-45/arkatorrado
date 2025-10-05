@@ -1,9 +1,8 @@
 package com.app.arkatorrado.domain.port.out;
 
-import com.app.arkatorrado.domain.model.Customer;
 import com.app.arkatorrado.domain.model.Order;
 import com.app.arkatorrado.domain.model.Product;
-
+import com.app.arkatorrado.domain.model.Customer;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;

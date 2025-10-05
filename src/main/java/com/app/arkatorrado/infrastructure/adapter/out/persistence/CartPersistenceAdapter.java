@@ -1,7 +1,7 @@
 package com.app.arkatorrado.infrastructure.adapter.out.persistence;
+
 import com.app.arkatorrado.domain.model.Cart;
 import com.app.arkatorrado.domain.port.out.CartRepositoryPort;
-
 import com.app.arkatorrado.infrastructure.adapter.out.persistence.entity.CartEntity;
 import com.app.arkatorrado.infrastructure.adapter.out.persistence.mapper.CartMapper;
 import com.app.arkatorrado.infrastructure.adapter.out.persistence.repository.CartJpaRepository;
@@ -12,7 +12,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Component
-public class CartPersistenceAdapter implements CartRepositoryPort{
+public class CartPersistenceAdapter implements CartRepositoryPort {
 
     private final CartJpaRepository repository;
     private final CartMapper mapper;
@@ -58,5 +58,4 @@ public class CartPersistenceAdapter implements CartRepositoryPort{
     public boolean existsById(Long id) {
         return repository.existsById(id);
     }
-
 }

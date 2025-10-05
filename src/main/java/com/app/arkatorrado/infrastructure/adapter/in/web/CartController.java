@@ -1,11 +1,7 @@
 package com.app.arkatorrado.infrastructure.adapter.in.web;
 
-import com.app.arkatorrado.application.usecase.CartApplicationService;
-import com.app.arkatorrado.application.usecase.CustomerApplicationService;
 import com.app.arkatorrado.domain.model.Cart;
-import com.app.arkatorrado.domain.model.Customer;
 import com.app.arkatorrado.domain.port.in.CartUseCase;
-import com.app.arkatorrado.domain.port.in.CustomerUseCase;
 import com.app.arkatorrado.infrastructure.adapter.in.web.dto.CartDto;
 import com.app.arkatorrado.infrastructure.adapter.in.web.mapper.CartWebMapper;
 import org.springframework.http.HttpStatus;
@@ -15,77 +11,129 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * REST Controller for Cart operations
+ * Implements e-commerce shopping cart functionality
+ */
 @RestController
 @RequestMapping("/carritos")
+@CrossOrigin(origins = "*")
 public class CartController {
 
-    private final CartUseCase cartService;
-    private final CustomerUseCase customerService;
+    private final CartUseCase cartUseCase;
+    private final CartWebMapper mapper;
 
-    public CartController(CartUseCase cartService, CustomerUseCase customerService) {
-        this.cartService = cartService;
-        this.customerService = customerService;
+    public CartController(CartUseCase cartUseCase, CartWebMapper mapper) {
+        this.cartUseCase = cartUseCase;
+        this.mapper = mapper;
     }
 
+    /**
+     * Get all shopping carts
+     */
     @GetMapping
-    public ResponseEntity<List<CartDto>> obtenerTodos() {
-        List<CartDto> carritos = cartService.getAllCarts().stream()
-                .map(CartWebMapper::toDto)
+    public ResponseEntity<List<CartDto>> getAllCarts() {
+        List<Cart> carts = cartUseCase.getAllCarts();
+        List<CartDto> cartDtos = carts.stream()
+                .map(mapper::toDto)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(carritos);
+        return ResponseEntity.ok(cartDtos);
     }
 
+    /**
+     * Get cart by ID
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<CartDto> obtenerPorId(@PathVariable Long id) {
+    public ResponseEntity<CartDto> getCartById(@PathVariable Long id) {
         try {
-            Cart cart = cartService.getCartById(id);
-            return ResponseEntity.ok(CartWebMapper.toDto(cart));
+            Cart cart = cartUseCase.getCartById(id);
+            return ResponseEntity.ok(mapper.toDto(cart));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
+    /**
+     * Create new shopping cart
+     */
     @PostMapping
-    public ResponseEntity<CartDto> crear(@RequestBody CartDto cartDto) {
+    public ResponseEntity<CartDto> createCart(@RequestBody CartDto cartDto) {
         try {
-            Customer cliente = customerService.getCustomerById(cartDto.getClienteId());
-            Cart cart = CartWebMapper.toDomain(cartDto, cliente);
-            Cart savedCart = cartService.createCart(cart);
-            return new ResponseEntity<>(CartWebMapper.toDto(savedCart), HttpStatus.CREATED);
-        } catch (Exception e) {
+            Cart cart = mapper.toDomain(cartDto);
+            Cart savedCart = cartUseCase.createCart(cart);
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body(mapper.toDto(savedCart));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
     }
 
+    /**
+     * Update existing cart
+     */
     @PutMapping("/{id}")
-    public ResponseEntity<CartDto> actualizar(@PathVariable Long id, @RequestBody CartDto cartDto) {
+    public ResponseEntity<CartDto> updateCart(@PathVariable Long id, @RequestBody CartDto cartDto) {
         try {
-            Customer cliente = customerService.getCustomerById(cartDto.getClienteId());
-            Cart cart = CartWebMapper.toDomain(cartDto, cliente);
-            Cart updatedCart = cartService.updateCart(id, cart);
-            return ResponseEntity.ok(CartWebMapper.toDto(updatedCart));
+            Cart cart = mapper.toDomain(cartDto);
+            Cart updatedCart = cartUseCase.updateCart(id, cart);
+            return ResponseEntity.ok(mapper.toDto(updatedCart));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
         }
     }
 
+    /**
+     * Delete cart
+     */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteCart(@PathVariable Long id) {
         try {
-            cartService.deleteCart(id);
+            cartUseCase.deleteCart(id);
             return ResponseEntity.noContent().build();
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
+    /**
+     * Get abandoned carts - Key e-commerce feature
+     */
     @GetMapping("/abandonados")
-    public ResponseEntity<List<CartDto>> obtenerCarritosAbandonados() {
-        List<CartDto> carritos = cartService.getAbandonedCarts().stream()
-                .map(CartWebMapper::toDto)
+    public ResponseEntity<List<CartDto>> getAbandonedCarts() {
+        List<Cart> abandonedCarts = cartUseCase.getAbandonedCarts();
+        List<CartDto> cartDtos = abandonedCarts.stream()
+                .map(mapper::toDto)
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(carritos);
+        return ResponseEntity.ok(cartDtos);
+    }
+
+    /**
+     * Activate cart
+     */
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<CartDto> activateCart(@PathVariable Long id) {
+        try {
+            Cart cart = cartUseCase.getCartById(id);
+            cart.activate();
+            Cart updatedCart = cartUseCase.updateCart(id, cart);
+            return ResponseEntity.ok(mapper.toDto(updatedCart));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    /**
+     * Abandon cart
+     */
+    @PutMapping("/{id}/abandonar")
+    public ResponseEntity<CartDto> abandonCart(@PathVariable Long id) {
+        try {
+            Cart cart = cartUseCase.getCartById(id);
+            cart.abandon();
+            Cart updatedCart = cartUseCase.updateCart(id, cart);
+            return ResponseEntity.ok(mapper.toDto(updatedCart));
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

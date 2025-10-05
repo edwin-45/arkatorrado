@@ -1,7 +1,6 @@
 package com.app.arkatorrado.domain.port.in;
 
 import com.app.arkatorrado.domain.model.Category;
-
 import java.util.List;
 
 public interface CategoryUseCase {

@@ -3,7 +3,6 @@ package com.app.arkatorrado.domain.model;
 import java.time.LocalDateTime;
 
 public class Cart {
-
     private Long id;
     private Customer cliente;
     private LocalDateTime fechaCreacion;

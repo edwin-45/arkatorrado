@@ -1,31 +1,45 @@
 package com.app.arkatorrado.infrastructure.adapter.in.web.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
+/**
+ * Data Transfer Object for Order
+ * Used for REST API communication
+ */
 public class OrderDto {
-
+    
     private Long id;
-    private Long clienteId;
-    private LocalDateTime fecha;
+    private Long customerId;
+    private String customerName;
+    private List<Long> productIds;
+    private List<String> productNames;
     private BigDecimal total;
-    private Set<Long> productosIds = new HashSet<>();
+    
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDateTime fechaPedido;
+    
+    private String estado;
 
-    // Constructor vacío
     public OrderDto() {}
 
-    // Constructor completo
-    public OrderDto(Long id, Long clienteId, LocalDateTime fecha, BigDecimal total, Set<Long> productosIds) {
+    public OrderDto(Long id, Long customerId, String customerName, 
+                   List<Long> productIds, List<String> productNames,
+                   BigDecimal total, LocalDateTime fechaPedido, String estado) {
         this.id = id;
-        this.clienteId = clienteId;
-        this.fecha = fecha;
+        this.customerId = customerId;
+        this.customerName = customerName;
+        this.productIds = productIds;
+        this.productNames = productNames;
         this.total = total;
-        this.productosIds = productosIds;
+        this.fechaPedido = fechaPedido;
+        this.estado = estado;
     }
 
-    // Getters y Setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -34,20 +48,36 @@ public class OrderDto {
         this.id = id;
     }
 
-    public Long getClienteId() {
-        return clienteId;
+    public Long getCustomerId() {
+        return customerId;
     }
 
-    public void setClienteId(Long clienteId) {
-        this.clienteId = clienteId;
+    public void setCustomerId(Long customerId) {
+        this.customerId = customerId;
     }
 
-    public LocalDateTime getFecha() {
-        return fecha;
+    public String getCustomerName() {
+        return customerName;
     }
 
-    public void setFecha(LocalDateTime fecha) {
-        this.fecha = fecha;
+    public void setCustomerName(String customerName) {
+        this.customerName = customerName;
+    }
+
+    public List<Long> getProductIds() {
+        return productIds;
+    }
+
+    public void setProductIds(List<Long> productIds) {
+        this.productIds = productIds;
+    }
+
+    public List<String> getProductNames() {
+        return productNames;
+    }
+
+    public void setProductNames(List<String> productNames) {
+        this.productNames = productNames;
     }
 
     public BigDecimal getTotal() {
@@ -58,11 +88,33 @@ public class OrderDto {
         this.total = total;
     }
 
-    public Set<Long> getProductosIds() {
-        return productosIds;
+    public LocalDateTime getFechaPedido() {
+        return fechaPedido;
     }
 
-    public void setProductosIds(Set<Long> productosIds) {
-        this.productosIds = productosIds != null ? productosIds : new HashSet<>();
+    public void setFechaPedido(LocalDateTime fechaPedido) {
+        this.fechaPedido = fechaPedido;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    @Override
+    public String toString() {
+        return "OrderDto{" +
+                "id=" + id +
+                ", customerId=" + customerId +
+                ", customerName='" + customerName + '\'' +
+                ", productIds=" + productIds +
+                ", productNames=" + productNames +
+                ", total=" + total +
+                ", fechaPedido=" + fechaPedido +
+                ", estado='" + estado + '\'' +
+                '}';
     }
 }

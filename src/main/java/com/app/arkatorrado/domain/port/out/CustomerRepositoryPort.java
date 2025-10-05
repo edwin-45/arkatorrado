@@ -1,7 +1,6 @@
 package com.app.arkatorrado.domain.port.out;
 
 import com.app.arkatorrado.domain.model.Customer;
-
 import java.util.List;
 import java.util.Optional;
 

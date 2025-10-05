@@ -1,66 +1,91 @@
 package com.app.arkatorrado.infrastructure.adapter.in.web.mapper;
 
-import com.app.arkatorrado.domain.model.Customer;
 import com.app.arkatorrado.domain.model.Order;
+import com.app.arkatorrado.domain.model.Customer;
 import com.app.arkatorrado.domain.model.Product;
 import com.app.arkatorrado.infrastructure.adapter.in.web.dto.OrderDto;
+import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Mapper between Order domain model and OrderDto
+ * Converts between domain and web layer representations
+ */
+@Component
 public class OrderWebMapper {
+
     /**
-     * Convierte un objeto Order del dominio a un OrderDto
+     * Convert Order domain model to OrderDto
      */
-    public static OrderDto toDto(Order order) {
+    public OrderDto toDto(Order order) {
         if (order == null) {
             return null;
         }
 
-        OrderDto orderDto = new OrderDto();
-        orderDto.setId(order.getId());
-        orderDto.setClienteId(order.getCliente() != null ? order.getCliente().getId() : null);
-        orderDto.setFecha(order.getFecha());
-        orderDto.setTotal(order.getTotal());
-
-        // Convertir Set<Product> a Set<Long> con los IDs de los productos
+        List<Long> productIds = null;
+        List<String> productNames = null;
+        
         if (order.getProductos() != null) {
-            Set<Long> productosIds = order.getProductos().stream()
+            productIds = order.getProductos().stream()
                     .map(Product::getId)
-                    .collect(Collectors.toSet());
-            orderDto.setProductosIds(productosIds);
+                    .collect(Collectors.toList());
+            
+            productNames = order.getProductos().stream()
+                    .map(Product::getNombre)
+                    .collect(Collectors.toList());
         }
 
-        return orderDto;
+        return new OrderDto(
+                order.getId(),
+                order.getCliente() != null ? order.getCliente().getId() : null,
+                order.getCliente() != null ? order.getCliente().getNombre() : null,
+                productIds,
+                productNames,
+                order.getTotal(),
+                order.getFecha(),
+                "PENDING" // Default status, could be extended with actual status field
+        );
     }
 
     /**
-     * Convierte un OrderDto a un objeto Order del dominio
-     * Requiere un objeto Customer y un Map de productos para la conversión
+     * Convert OrderDto to Order domain model
      */
-    public static Order toDomain(OrderDto orderDto, Customer cliente, Map<Long, Product> productosMap) {
+    public Order toDomain(OrderDto orderDto) {
         if (orderDto == null) {
             return null;
         }
 
         Order order = new Order();
         order.setId(orderDto.getId());
-        order.setCliente(cliente);
-        order.setFecha(orderDto.getFecha());
+        order.setFecha(orderDto.getFechaPedido());
         order.setTotal(orderDto.getTotal());
 
-        // Convertir Set<Long> a Set<Product> usando el mapa de productos
-        if (orderDto.getProductosIds() != null) {
-            Set<Product> productos = new HashSet<>();
-            for (Long productoId : orderDto.getProductosIds()) {
-                Product producto = productosMap.get(productoId);
-                if (producto != null) {
-                    productos.add(producto);
+        // For simplicity, we create a minimal Customer object
+        // In a real application, you might need to fetch the full Customer from a repository
+        if (orderDto.getCustomerId() != null) {
+            Customer customer = new Customer();
+            customer.setId(orderDto.getCustomerId());
+            customer.setNombre(orderDto.getCustomerName());
+            order.setCliente(customer);
+        }
+
+        // For simplicity, we create minimal Product objects
+        // In a real application, you might need to fetch the full Products from a repository
+        if (orderDto.getProductIds() != null && !orderDto.getProductIds().isEmpty()) {
+            Set<Product> products = new HashSet<>();
+            for (int i = 0; i < orderDto.getProductIds().size(); i++) {
+                Product product = new Product();
+                product.setId(orderDto.getProductIds().get(i));
+                if (orderDto.getProductNames() != null && i < orderDto.getProductNames().size()) {
+                    product.setNombre(orderDto.getProductNames().get(i));
                 }
+                products.add(product);
             }
-            order.setProductos(productos);
+            order.setProductos(products);
         }
 
         return order;

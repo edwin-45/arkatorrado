@@ -7,7 +7,13 @@ import com.app.arkatorrado.domain.port.out.CartRepositoryPort;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Application Service for Cart Use Cases
+ * This class orchestrates the business logic for Cart operations
+ * Following Hexagonal Architecture - Application Layer
+ */
 public class CartApplicationService implements CartUseCase {
+    
     private final CartRepositoryPort cartRepository;
 
     public CartApplicationService(CartRepositoryPort cartRepository) {
